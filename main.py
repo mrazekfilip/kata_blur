@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 # Load image
 img = cv2.imread('lenna.png')
@@ -33,7 +34,22 @@ def gaussian_kernel_1d(ksize, sigma):
 
 ax, kernel = gaussian_kernel_1d(kernel_size, sigma if sigma > 0 else 1)
 
+# Calculate area under the discrete kernel (should be 1.0)
+discrete_area = np.sum(kernel)
+
+# Calculate area under the continuous Gaussian over the same range
+half = (kernel_size - 1) // 2
+# CDF at the edges
+cdf_left = norm.cdf(-half - 0.5, loc=0, scale=sigma)
+cdf_right = norm.cdf(half + 0.5, loc=0, scale=sigma)
+continuous_area = cdf_right - cdf_left
+
+# Percentage of area covered by the kernel
+percentage = (continuous_area / discrete_area) * 100 if discrete_area > 0 else 0
+
 st.subheader("1D Gaussian Kernel")
+st.write(f"Kernel covers **{percentage:.2f}%** of the full Gaussian area.")
+
 fig, ax1 = plt.subplots()
 
 # Plot the actual kernel
